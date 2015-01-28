@@ -6,6 +6,10 @@
 *.user
 *.sln.docstates
 
+#Config Transforms
+Web.Debug.config
+Web.Release.config
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
