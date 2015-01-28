@@ -12,6 +12,7 @@ namespace TSFWorkItemTracker.Hubs
     {
         static Timer TFSPoll;
         static List<string> TimerLog;
+        static List<WorkItem> TFSWorkItems;
 
         public ChatHub() : base()
         {
@@ -25,12 +26,21 @@ namespace TSFWorkItemTracker.Hubs
             {
                 TimerLog = new List<string>();
             }
+            if (TFSWorkItems == null)
+            {
+                TFSWorkItems = new List<WorkItem>();
+            }
         }
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
             TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
             GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            
+            List<WorkItem> FreshTFSWorkItems = new List<WorkItem>();
+
+            TfsTeamProjectCollection tpc = new TfsTeamProjectCollection(new Uri(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri")));
+            System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerURI");
         }
 
         public void Send(string message)
