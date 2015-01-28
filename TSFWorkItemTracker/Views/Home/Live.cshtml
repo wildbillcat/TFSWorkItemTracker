@@ -6,6 +6,7 @@
     <input type="text" id="message" />
     <input type="button" id="sendmessage" value="Send" />
     <ul id="discussion"></ul>
+    <ul id="workitems"></ul>
 </div>
 @section scripts {
     <!--Script references. -->
@@ -25,6 +26,12 @@
                 $('#discussion').append('<li><strong>' + htmlEncode(name)
                     + '</strong>: ' + htmlEncode(message) + '</li>');
             };
+
+            chat.client.addNewWorkItemToPage = function (item) {
+                // Add the message to the page.
+                $('#workitems').append('<li>' + htmlEncode(item) + '</li>');
+            };
+
             // Set initial focus to message input box.
             $('#message').focus();
             // Start the connection.
