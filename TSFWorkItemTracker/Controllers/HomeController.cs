@@ -13,6 +13,11 @@ namespace TSFWorkItemTracker.Controllers
             return View();
         }
 
+        public ActionResult Live()
+        {
+            return View();
+        }
+
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
