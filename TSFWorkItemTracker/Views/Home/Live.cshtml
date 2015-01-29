@@ -1,13 +1,19 @@
 ﻿@{
     ViewBag.Title = "Chat";
 }
-<h2>Chat</h2>
-<div class="container">
-    <textarea id="discussion" rows="4" cols="100" readonly></textarea> 
-    <input type="text" id="message" />
-    <input type="button" id="sendmessage" value="Send" />
-    <ul id="workitems"></ul>
+<h2>Live Monitor</h2>
+
+<!--This Div hold the Chat application, used to both communicate amongst the teams and post system notifications-->
+<div class="jumbotron">
+    <textarea id="discussion" rows="10" cols="100" readonly="readonly" style="width:100%; height:100px"></textarea>
+    <br />
+    <input type="text" id="message" style="width:75%"/>
+    <input type="button" id="sendmessage" value="Send Message" />
 </div>
+
+<!--This Div holds the work items sent by the server-->
+<div id="workitems" class="col-xs-12"></div>
+    
 @section scripts {
     <!--Script references. -->
     <!--The jQuery library is required and is referenced by default in _Layout.cshtml. -->
@@ -24,12 +30,12 @@
             chat.client.addNewMessageToPage = function (name, message) {
                 // Add the message to the page.
                 $('#discussion').append(htmlEncode(name)
-                    + ' : ' + htmlEncode(message));
+                    + ' : ' + htmlEncode(message) + ' \n');
             };
 
             chat.client.addNewWorkItemToPage = function (item) {
                 // Add the message to the page.
-                $('#workitems').append('<li>' + htmlEncode(item) + '</li>');
+                $('#workitems').append('<div class="row">' + htmlEncode(item) + '</div>');
             };
 
             // Set initial focus to message input box.
