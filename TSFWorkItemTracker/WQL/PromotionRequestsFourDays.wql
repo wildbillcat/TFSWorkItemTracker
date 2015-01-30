@@ -1,0 +1,7 @@
+﻿**This WQL should bring up the past 4 days of pending promotion requests.
+
+Where [Work Item Type] = 'Promote Request'
+AND ( [State] = ‘Submitted for Non-Prod Promotion’
+OR [State] = ‘Submitted for Prod Promotion’
+OR [State] = ‘Verified’ )
+AND Request Date > @Today - 4
