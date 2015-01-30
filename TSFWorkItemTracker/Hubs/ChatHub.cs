@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Microsoft.AspNet.SignalR;
+using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using System.Timers;
@@ -11,6 +12,7 @@ using System.Collections.Concurrent;
 
 namespace TSFWorkItemTracker.Hubs
 {
+    [HubName("chat")]
     public class ChatHub : Hub
     {
         //This Timer is used to trigger a query against TFS, then updating clients with new information
@@ -91,7 +93,7 @@ namespace TSFWorkItemTracker.Hubs
         static private void OnTimedEvent2(Object source, ElapsedEventArgs e)
         {
             TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
         }
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
@@ -158,9 +160,8 @@ namespace TSFWorkItemTracker.Hubs
 
         public void Send(string message)
         {
-            // Call the addNewMessageToPage method to update clients.
-            Clients.All.addNewMessageToPage(Context.User.Identity.Name, message);
-            //Clients.All.addNewWorkItemToPage(new WorkItemTestObject());
+            //Contatenate the logged in username and send it to the clients for publish
+            Clients.All.newMessage(string.Concat(Context.User.Identity.Name, ":", message));
         }
 
         public override System.Threading.Tasks.Task OnConnected()
