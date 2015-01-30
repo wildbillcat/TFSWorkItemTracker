@@ -20,7 +20,7 @@ namespace TSFWorkItemTracker.Hubs
         //This string maintains the state of the timer log since application start. Just a Proof of concept to later be replaced by workitems.
         static List<string> TimerLog;
         //Stores a list of WorkItems found by the Query
-        static BlockingCollection<WorkItem> TFSWorkItems;
+        static Dictionary<string, List<WorkItem>> TFSWorkItems;
         
         //Stores a list of URIs to access the Work items in TFS
         static List<Uri> ProjectCollectionUris;
@@ -31,8 +31,8 @@ namespace TSFWorkItemTracker.Hubs
         //Timeout in Milliseconds for asyncronous query timeouts
         static int TFSServerQueryTimeout;
         //List of all the Async Query Objects used to find work Items
-        static List<Query> TFSServerQueryList;
-
+        static Dictionary<string, Query> TFSServerQuerys;
+        
         static Object TimerEventLock;
 
         public ChatHub() : base()
@@ -48,17 +48,12 @@ namespace TSFWorkItemTracker.Hubs
             {
                 TimerLog = new List<string>();
             }
-            if (TFSWorkItems == null)
-            {
-                TFSWorkItems = new BlockingCollection<WorkItem>();
-            }
             if (ProjectCollectionUris == null)
             {
                 ProjectCollectionUris = new List<Uri>();
                 //Fetch the list of uri to the tfs server(s) project collection(s)
-                string TfsUriString = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri");
                 //Parses comma delimited array of Uri
-                foreach (string CollectionURI in TfsUriString.Split(','))
+                foreach (string CollectionURI in System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(','))
                 {
                     ProjectCollectionUris.Add(new Uri(CollectionURI.Trim()));
                 }
@@ -76,17 +71,21 @@ namespace TSFWorkItemTracker.Hubs
             {
                 TFSServerQuery = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery");
             }
-            if (TFSServerQueryList == null)
+            if (TFSServerQuerys == null)
             {
-                TFSServerQueryList = new List<Query>();
+                TFSServerQuerys = new Dictionary<string, Query>();
                 foreach (TfsTeamProjectCollection ProjectCollection in TfsProjectCollections)
                 {
-                    TFSServerQueryList.Add(new Query((WorkItemStore)ProjectCollection.GetService(typeof(WorkItemStore)), TFSServerQuery));
+                    TFSServerQuerys.Add(ProjectCollection.Name, new Query((WorkItemStore)ProjectCollection.GetService(typeof(WorkItemStore)), TFSServerQuery));
                 }
             }
             if (TimerEventLock == null)
             {
                 TimerEventLock = new Object();
+            }
+            if (TFSWorkItems == null)
+            {
+                TFSWorkItems = new Dictionary<string, List<WorkItem>>();
             }
             TFSServerQueryTimeout = int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQueryTimeout"));
         }
@@ -98,63 +97,68 @@ namespace TSFWorkItemTracker.Hubs
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
+            TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            //This holds the results from the queries. Blocking collection allows for queries to be handled in multiple threads
+            Dictionary<string, List<WorkItem>> FreshTFSWorkItems = new Dictionary<string, List<WorkItem>>();
+            //Start all of the queries against the server (Async)
+            Dictionary<string, ICancelableAsyncResult> CallBacks = new Dictionary<string, ICancelableAsyncResult>();
+
+            //Start the Async Queries
+            foreach (string ProjectName in TFSServerQuerys.Keys)
+            {
+                CallBacks.Add(ProjectName, TFSServerQuerys[ProjectName].BeginQuery());
+                FreshTFSWorkItems.Add(ProjectName, new List<WorkItem>());
+            }
+            //Read Only Query Section
+            Parallel.ForEach(CallBacks.Keys, ProjName =>
+            {
+                CallBacks[ProjName].AsyncWaitHandle.WaitOne(TFSServerQueryTimeout, false);
+            });           
+            
             //This is to keep the event method threads safe if the thread(s) take too long and another event fires before completion.
             //If this happens on a regular basis this is an issue, and the timer should be adjusted accordingly.
             lock (TimerEventLock)
             {
-                TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-                GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-                //This holds the results from the queries. Blocking collection allows for queries to be handled in multiple threads
-                BlockingCollection<WorkItem> FreshTFSWorkItems = new BlockingCollection<WorkItem>();
-                //Start all of the queries against the server (Async)
-                List<ICancelableAsyncResult> CallBacks = new List<ICancelableAsyncResult>();
-                Dictionary<ICancelableAsyncResult, Query> ResultLookup = new Dictionary<ICancelableAsyncResult, Query>();
-                foreach (Query TfsQuery in TFSServerQueryList)
-                {
-                    ICancelableAsyncResult callback = TfsQuery.BeginQuery();
-                    CallBacks.Add(callback);
-                    ResultLookup.Add(callback, TfsQuery);
-                }
                 //Now wait on all the queries and pull all the results of successfull queries
-                Parallel.ForEach(CallBacks, callback =>
+                Parallel.ForEach(CallBacks.Keys, ProjName =>
                 {
-                    callback.AsyncWaitHandle.WaitOne(TFSServerQueryTimeout, false);
-                    if (!callback.IsCompleted)
+                    if (!CallBacks[ProjName].IsCompleted)
                     {
                         //Query hasnt returned. Cancel the query
-                        callback.Cancel();
+                        CallBacks[ProjName].Cancel();
                         GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
                     }
                     else
                     {
                         //Query has returned, lets find any new results
-                        WorkItemCollection nextresults = ResultLookup[callback].EndQuery(callback);
+                        WorkItemCollection nextresults = TFSServerQuerys[ProjName].EndQuery(CallBacks[ProjName]);
+                        List<WorkItem> Deletion = new List<WorkItem>();
+
+                        //Delete old Work Items Loop 
+                        //Builds a list of Items to delete. For each loops do not reevaluate their index, so removing in the loop could cause issues.
+                        foreach (WorkItem DeletionCandidate in TFSWorkItems[ProjName])
+                        {
+                            if (!FreshTFSWorkItems[ProjName].Contains(DeletionCandidate))
+                            {
+                                //Remove from client side
+                                ////GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
+                            }
+                        }
+                        //Add new Work Items Loop.
                         foreach (WorkItem result in nextresults)
                         {
-                            //Add the WorkItem to the Fresh list for later comparison
-                            FreshTFSWorkItems.TryAdd(result);
                             //If the WorkItem doesnt exist in the current Collection, add it and update clients.
-                            if (!TFSWorkItems.Contains(result))
+                            if (!TFSWorkItems[ProjName].Contains(result))
                             {
-                                TFSWorkItems.TryAdd(result);
                                 //Method for updating clients will have to be added.
                                 //GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
                             }
                         }
+                        //Now that Clients have been Diff'd replace the WorkItemList
+                        TFSWorkItems[ProjName] = FreshTFSWorkItems[ProjName];
                     }
                 });
-
-                //Now all queries have been run and results have been agrigates. Update clients on which work Items have been removed
-                foreach (WorkItem tfsworkitem in TFSWorkItems)
-                {
-                    if (!FreshTFSWorkItems.Contains(tfsworkitem))
-                    {
-                        //Method for updating clients will have to be added.
-                        //GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
-                    }
-                }
-                //WARNING: If the timer thread takes too long and another firing of this method starts,
-                TFSWorkItems = FreshTFSWorkItems;
             }
         }
 
@@ -166,11 +170,15 @@ namespace TSFWorkItemTracker.Hubs
 
         public override System.Threading.Tasks.Task OnConnected()
         {
-            foreach (string Log in TimerLog)
+            lock (TimerEventLock)
             {
-                Clients.Client(Context.ConnectionId).addNewWorkItemToPage(Log);
+                //Add a lock to prevent clients joining on query
+                foreach (string Log in TimerLog)
+                {
+                    Clients.Client(Context.ConnectionId).addNewWorkItemToPage(Log);
+                }
+                return base.OnConnected();
             }
-            return base.OnConnected();
         }
     }
 }
