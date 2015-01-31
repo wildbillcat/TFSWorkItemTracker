@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFSWorkItemTracker", "TSFWorkItemTracker\TFSWorkItemTracker.csproj", "{143908C5-025C-4FB3-A584-00717F25D314}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TFSWorkItemTracker", "TFSWorkItemTracker\TFSWorkItemTracker.csproj", "{143908C5-025C-4FB3-A584-00717F25D314}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
