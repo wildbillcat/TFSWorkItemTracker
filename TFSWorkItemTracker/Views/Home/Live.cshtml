@@ -3,20 +3,25 @@
 }
 
 <h2>Live Monitor</h2>
-
-<!--This Div hold the Chat application, used to both communicate amongst the teams and post system notifications-->
-<div ng-controller="mainCtrl" class="chatConsole">
-    <div id="chatDiv" class="scrollable" style="height : 100px; overflow-y: auto;">
-        <div ng-repeat="msg in messages">{{msg.message}}</div>
+<div id="AngularApp" ng-controller="mainCtrl">
+    <!--This Div hold the Chat application, used to both communicate amongst the teams and post system notifications-->
+    <div class="chatConsole">
+        <div id="chatDiv" class="scrollable" style="height : 100px; overflow-y: auto;">
+            <div ng-repeat="msg in messages">{{msg.message}}</div>
+        </div>
+        <div>
+            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="chat message" />
+            <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
+        </div>
     </div>
-    <div>
-        <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="chat message" />
-        <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
+    <!--This Div holds the work items sent by the server-->
+    <div id="workitems" class="col-xs-12">
+        <div id="WorkItem">
+            <div ng-repeat="hdr in queryheaders">{{hdr.header}}</div>
+        </div>
     </div>
 </div>
 
-<!--This Div holds the work items sent by the server-->
-<div id="workitems" class="col-xs-12"></div>
 
 @section scripts {
     <!--Script references. -->
@@ -34,8 +39,11 @@
             angular.module('app', []).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
                 $scope.workitems = [{"demo":[]}];
+                $scope.queryheaders = [];
 
+                //Client Side
 
+                //Allows for enter key to be used to send messages
                 $scope.keyPress = function onKeyPress($event) {
                     //13 is the enter key
                     if ($event.keyCode == 13) {
@@ -43,17 +51,28 @@
                     }
                 };
 
+                //Sends message to server
                 $scope.sendMessage = function () {
                     chat.server.send($scope.newMessage);
                     $scope.newMessage = "";
                 };
 
+                //Server Side
+
+                //Adds a new message to chat window
                 chat.client.newMessage = function onNewMessage(message) {
                     $scope.messages.push({ message: message });
                     $scope.$apply();
                     var chatDiv = document.getElementById("chatDiv");
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                     console.log(message);
+                };
+
+                //Allows server to set the headers to the workitem table
+                chat.client.setQueryHeader = function onSetQueryHeader(header) {
+                    $scope.queryheaders.push({ header: header });
+                    $scope.messages.push({ header: header });
+                    $scope.$apply();
                 };
             });
             

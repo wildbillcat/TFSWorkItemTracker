@@ -33,17 +33,19 @@ namespace TFSWorkItemTracker.Hubs
         static int TFSServerQueryTimeout = int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQueryTimeout"));
         //List of all the Async Query Objects used to find work Items
         static Dictionary<string, Query> TFSServerQuerys = new Dictionary<string, Query>();
+        //Headers Parsed from the Query
+        static string[] QueryHeaders = GetQueryFields();
         
         static Object TimerEventLock = new Object();
 
         public ChatHub() : base()
         {
-            if (TFSPoll == null)
-            {
-                TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
-                TFSPoll.Elapsed += OnTimedEvent;
-                TFSPoll.Enabled = true;                
-            }
+            //if (TFSPoll == null)
+            //{
+            //    TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
+            //    TFSPoll.Elapsed += OnTimedEvent;
+            //    TFSPoll.Enabled = true;
+            //}
 
             //Ensure Project Collections are fine
             if (!((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length)))
@@ -62,10 +64,26 @@ namespace TFSWorkItemTracker.Hubs
                     }
                     if (!TFSServerQuerys.ContainsKey(Team.Name))
                     {
-                        TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
+                        //TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
                     }
                 }
             }
+        }
+
+        private static string[] GetQueryFields()
+        {
+            string query = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery");
+            //Trim to just get the select values.
+            query = query.Substring(query.IndexOf("[") - 1);
+            string[] vals = query.Split(',');
+            vals[vals.Length - 1] = vals[vals.Length - 1].Substring(0, vals[vals.Length - 1].IndexOf("]") + 1);
+            List<string> Headings = new List<string>();
+            foreach (string val in vals)
+            {
+                string TrimmedVal = val.Trim();
+                Headings.Add(TrimmedVal.Substring(TrimmedVal.IndexOf("[") + 1, TrimmedVal.Length - 2));
+            }
+            return Headings.ToArray();
         }
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
@@ -144,6 +162,10 @@ namespace TFSWorkItemTracker.Hubs
 
         public override System.Threading.Tasks.Task OnConnected()
         {
+            foreach (string header in QueryHeaders)
+            {
+                Clients.Client(Context.ConnectionId).setQueryHeader(header);
+            }
             lock (TimerEventLock)
             {
                 //Add a lock to prevent clients joining on query
@@ -151,8 +173,8 @@ namespace TFSWorkItemTracker.Hubs
                 {
                     Clients.Client(Context.ConnectionId).addNewWorkItemToPage(Log);
                 }
-                return base.OnConnected();
             }
+            return base.OnConnected();
         }
     }
 }
