@@ -17,88 +17,54 @@ namespace TFSWorkItemTracker.Hubs
     {
         //This Timer is used to trigger a query against TFS, then updating clients with new information
         static Timer TFSPoll;
+        
         //This string maintains the state of the timer log since application start. Just a Proof of concept to later be replaced by workitems.
-        static List<string> TimerLog;
+        static List<string> TimerLog = new List<string>();
         //Stores a list of WorkItems found by the Query
-        static Dictionary<string, List<WorkItem>> TFSWorkItems;
+        static Dictionary<string, List<WorkItem>> TFSWorkItems = new Dictionary<string, List<WorkItem>>();
         
         //Stores a list of URIs to access the Work items in TFS
-        static List<Uri> ProjectCollectionUris;
+        static string[] ProjectCollectionUris = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(',');
         //This is a list of all the project collections that this application connects to
-        static List<TfsTeamProjectCollection> TfsProjectCollections;
+        static List<TfsTeamProjectCollection> TfsProjectCollections = new List<TfsTeamProjectCollection>();
         //This is the Query Run against each of the collections
-        static string TFSServerQuery;
+        static string TFSServerQuery = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery");
         //Timeout in Milliseconds for asyncronous query timeouts
-        static int TFSServerQueryTimeout;
+        static int TFSServerQueryTimeout = int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQueryTimeout"));
         //List of all the Async Query Objects used to find work Items
-        static Dictionary<string, Query> TFSServerQuerys;
+        static Dictionary<string, Query> TFSServerQuerys = new Dictionary<string, Query>();
         
-        static Object TimerEventLock;
+        static Object TimerEventLock = new Object();
 
         public ChatHub() : base()
         {
             if (TFSPoll == null)
             {
                 TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
-                //TFSPoll.Elapsed += OnTimedEvent;
-                TFSPoll.Elapsed += OnTimedEvent2;
+                TFSPoll.Elapsed += OnTimedEvent;
                 TFSPoll.Enabled = true;
-            }
-            if (TimerLog == null)
-            {
-                TimerLog = new List<string>();
-            }
-            if (ProjectCollectionUris == null)
-            {
-                ProjectCollectionUris = new List<Uri>();
-                //Fetch the list of uri to the tfs server(s) project collection(s)
-                //Parses comma delimited array of Uri
-                foreach (string CollectionURI in System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(','))
+
+                //Ensure Project Collections are fine
+                if (((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length)))
                 {
-                    ProjectCollectionUris.Add(new Uri(CollectionURI.Trim()));
+                    //This builds a list of project collections for querying later.
+                    foreach (string Location in ProjectCollectionUris)
+                    {
+                        TfsTeamProjectCollection Team = new TfsTeamProjectCollection(new Uri(Location));
+                        TfsProjectCollections.Add(Team);
+                        TFSWorkItems.Add(Team.Name, new List<WorkItem>());
+                        TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
+                    }
                 }
-            }
-            if (TfsProjectCollections == null)
-            {
-                //This builds a list of project collections for querying later.
-                TfsProjectCollections = new List<TfsTeamProjectCollection>();
-                foreach (Uri Location in ProjectCollectionUris)
-                {
-                    TfsProjectCollections.Add(new TfsTeamProjectCollection(Location));
-                }
-            }
-            if (TFSServerQuery == null)
-            {
-                TFSServerQuery = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery");
-            }
-            if (TFSServerQuerys == null)
-            {
-                TFSServerQuerys = new Dictionary<string, Query>();
-                foreach (TfsTeamProjectCollection ProjectCollection in TfsProjectCollections)
-                {
-                    TFSServerQuerys.Add(ProjectCollection.Name, new Query((WorkItemStore)ProjectCollection.GetService(typeof(WorkItemStore)), TFSServerQuery));
-                }
-            }
-            if (TimerEventLock == null)
-            {
-                TimerEventLock = new Object();
-            }
-            if (TFSWorkItems == null)
-            {
-                TFSWorkItems = new Dictionary<string, List<WorkItem>>();
-            }
-            TFSServerQueryTimeout = int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQueryTimeout"));
-        }
-        static private void OnTimedEvent2(Object source, ElapsedEventArgs e)
-        {
-            TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            }            
         }
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
             TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
+            
+            
             //This holds the results from the queries. Blocking collection allows for queries to be handled in multiple threads
             Dictionary<string, List<WorkItem>> FreshTFSWorkItems = new Dictionary<string, List<WorkItem>>();
             //Start all of the queries against the server (Async)

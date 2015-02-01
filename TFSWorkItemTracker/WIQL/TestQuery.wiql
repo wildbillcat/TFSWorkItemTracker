@@ -1,0 +1,3 @@
+﻿Select [ID], [Team Project], [State], [Changed Date], [Title] 
+From WorkItems 
+Where [State] = 'New'
