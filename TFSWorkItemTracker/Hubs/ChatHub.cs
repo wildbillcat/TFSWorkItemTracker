@@ -26,7 +26,7 @@ namespace TFSWorkItemTracker.Hubs
         //Stores a list of URIs to access the Work items in TFS
         static string[] ProjectCollectionUris = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(',');
         //This is a list of all the project collections that this application connects to
-        static List<TfsTeamProjectCollection> TfsProjectCollections = new List<TfsTeamProjectCollection>();
+        static Dictionary<string, TfsTeamProjectCollection> TfsProjectCollections = new Dictionary<string, TfsTeamProjectCollection>();
         //This is the Query Run against each of the collections
         static string TFSServerQuery = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery");
         //Timeout in Milliseconds for asyncronous query timeouts
@@ -42,29 +42,35 @@ namespace TFSWorkItemTracker.Hubs
             {
                 TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
                 TFSPoll.Elapsed += OnTimedEvent;
-                TFSPoll.Enabled = true;
+                TFSPoll.Enabled = true;                
+            }
 
-                //Ensure Project Collections are fine
-                if (((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length)))
+            //Ensure Project Collections are fine
+            if (!((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length)))
+            {
+                //This builds a list of project collections for querying later.
+                foreach (string Location in ProjectCollectionUris)
                 {
-                    //This builds a list of project collections for querying later.
-                    foreach (string Location in ProjectCollectionUris)
+                    TfsTeamProjectCollection Team = new TfsTeamProjectCollection(new Uri(Location));
+                    if (!TfsProjectCollections.ContainsKey(Team.Name))
                     {
-                        TfsTeamProjectCollection Team = new TfsTeamProjectCollection(new Uri(Location));
-                        TfsProjectCollections.Add(Team);
+                        TfsProjectCollections.Add(Team.Name, Team);
+                    }
+                    if (!TFSWorkItems.ContainsKey(Team.Name))
+                    {
                         TFSWorkItems.Add(Team.Name, new List<WorkItem>());
+                    }
+                    if (!TFSServerQuerys.ContainsKey(Team.Name))
+                    {
                         TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
                     }
                 }
-            }            
+            }
         }
 
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            TimerLog.Add(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));
-            
-            
+            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("The Elapsed event was raised at {0}", e.SignalTime));            
             //This holds the results from the queries. Blocking collection allows for queries to be handled in multiple threads
             Dictionary<string, List<WorkItem>> FreshTFSWorkItems = new Dictionary<string, List<WorkItem>>();
             //Start all of the queries against the server (Async)
@@ -87,13 +93,14 @@ namespace TFSWorkItemTracker.Hubs
             lock (TimerEventLock)
             {
                 //Now wait on all the queries and pull all the results of successfull queries
+                //foreach(string ProjName in CallBacks.Keys)
                 Parallel.ForEach(CallBacks.Keys, ProjName =>
                 {
                     if (!CallBacks[ProjName].IsCompleted)
                     {
                         //Query hasnt returned. Cancel the query
                         CallBacks[ProjName].Cancel();
-                        GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out to ", ProjName, " at: ", e.SignalTime));
+                        GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("A query has timed out to ", ProjName, " at: ", e.SignalTime));
                     }
                     else
                     {
@@ -114,6 +121,7 @@ namespace TFSWorkItemTracker.Hubs
                         //Add new Work Items Loop.
                         foreach (WorkItem result in nextresults)
                         {
+                            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("One Work Item Found. ", result.ToString()));   
                             //If the WorkItem doesnt exist in the current Collection, add it and update clients.
                             if (!TFSWorkItems[ProjName].Contains(result))
                             {

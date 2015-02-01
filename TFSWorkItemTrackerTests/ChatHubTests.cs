@@ -23,9 +23,9 @@ namespace TFSWorkItemTrackerTests
         public void Test1()
         {
             //Arrange
-
+            string query = "Select [ID], [Team Project], [State], [Changed Date], [Title] From WorkItems Where [State] = 'New'";
             //Act
-
+            //query = query.Substring()
             //Assert
         }
 
