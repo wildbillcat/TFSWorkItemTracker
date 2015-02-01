@@ -93,7 +93,7 @@ namespace TFSWorkItemTracker.Hubs
                     {
                         //Query hasnt returned. Cancel the query
                         CallBacks[ProjName].Cancel();
-                        GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
+                        GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out to ", ProjName, " at: ", e.SignalTime));
                     }
                     else
                     {
