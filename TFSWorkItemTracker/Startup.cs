@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Owin;
 using Owin;
 
-[assembly: OwinStartup(typeof(TSFWorkItemTracker.Startup))]
+[assembly: OwinStartup(typeof(TFSWorkItemTracker.Startup))]
 
-namespace TSFWorkItemTracker
+namespace TFSWorkItemTracker
 {
     public class Startup
     {

@@ -10,7 +10,7 @@ using System.Timers;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
-namespace TSFWorkItemTracker.Hubs
+namespace TFSWorkItemTracker.Hubs
 {
     [HubName("chat")]
     public class ChatHub : Hub
