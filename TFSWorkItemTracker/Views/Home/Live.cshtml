@@ -15,9 +15,11 @@
         </div>
     </div>
     <!--This Div holds the work items sent by the server-->
-    <div id="workitems" class="col-xs-12">
-        <div id="WorkItem">
-            <div ng-repeat="hdr in queryheaders">{{hdr.header}}</div>
+    <div id="workitemlist" class="col-xs-12">
+        <div id="WorkItemProject" class="row">
+            <div ng-repeat="workitem in workitems" class="row">
+                {{workitem.Id}} : {{workitem.Project}} : {{workitem.State}} : {{workitem.ChangedDate}} : {{workitem.Title}} : {{workitem.Collection}} : {{workitem.Collection}} : {{workitem.Uri}}
+            </div>
         </div>
     </div>
 </div>
@@ -38,8 +40,7 @@
             ////Angular Section - Create the Application And Controler
             angular.module('app', []).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
-                $scope.workitems = [{"demo":[]}];
-                $scope.queryheaders = [];
+                $scope.workitems = [];
 
                 //Client Side
 
@@ -68,12 +69,15 @@
                     console.log(message);
                 };
 
-                //Allows server to set the headers to the workitem table
-                chat.client.setQueryHeader = function onSetQueryHeader(header) {
-                    $scope.queryheaders.push({ header: header });
-                    $scope.messages.push({ header: header });
+                chat.client.addWorkItem = function onAddWorkItem(workitem) {
+                    $scope.workitems.push(workitem);
                     $scope.$apply();
-                };
+                }
+
+                chat.client.removeWorkItem = function onRemoveWorkItem(workiem) {
+                    $scope.workitems.splice(workiem);
+                    $scope.$apply();
+                }
             });
             
             // Start the connection.

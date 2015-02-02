@@ -9,6 +9,7 @@ using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using System.Timers;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using TFSWorkItemTracker.Models; 
 
 namespace TFSWorkItemTracker.Hubs
 {
@@ -22,6 +23,7 @@ namespace TFSWorkItemTracker.Hubs
         static List<string> TimerLog = new List<string>();
         //Stores a list of WorkItems found by the Query
         static Dictionary<string, List<WorkItem>> TFSWorkItems = new Dictionary<string, List<WorkItem>>();
+        static Dictionary<string, Dictionary<int, PocoWorkItem>> TFSPocoWorkItems = new Dictionary<string, Dictionary<int, PocoWorkItem>>();
         
         //Stores a list of URIs to access the Work items in TFS
         static string[] ProjectCollectionUris = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(',');
@@ -40,15 +42,15 @@ namespace TFSWorkItemTracker.Hubs
 
         public ChatHub() : base()
         {
-            //if (TFSPoll == null)
-            //{
-            //    TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
-            //    TFSPoll.Elapsed += OnTimedEvent;
-            //    TFSPoll.Enabled = true;
-            //}
+            if (TFSPoll == null)
+            {
+                TFSPoll = new System.Timers.Timer(int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerTimer")));
+                TFSPoll.Elapsed += OnTimedEvent;
+                TFSPoll.Enabled = true;
+            }
 
             //Ensure Project Collections are fine
-            if (!((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length)))
+            if (!((TfsProjectCollections.Count() == ProjectCollectionUris.Length) && (TFSServerQuerys.Count() == ProjectCollectionUris.Length) && (TFSWorkItems.Count() == ProjectCollectionUris.Length) && (TFSPocoWorkItems.Count == ProjectCollectionUris.Length)))
             {
                 //This builds a list of project collections for querying later.
                 foreach (string Location in ProjectCollectionUris)
@@ -64,7 +66,10 @@ namespace TFSWorkItemTracker.Hubs
                     }
                     if (!TFSServerQuerys.ContainsKey(Team.Name))
                     {
-                        //TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
+                        TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
+                    }
+                    if(!TFSPocoWorkItems.ContainsKey(Team.Name)){
+                        TFSPocoWorkItems.Add(Team.Name, new Dictionary<int, PocoWorkItem>());
                     }
                 }
             }
@@ -128,23 +133,24 @@ namespace TFSWorkItemTracker.Hubs
 
                         //Delete old Work Items Loop 
                         //Builds a list of Items to delete. For each loops do not reevaluate their index, so removing in the loop could cause issues.
-                        foreach (WorkItem DeletionCandidate in TFSWorkItems[ProjName])
+                        foreach (PocoWorkItem DeletionCandidate in TFSPocoWorkItems[ProjName].Values)
                         {
-                            if (!FreshTFSWorkItems[ProjName].Contains(DeletionCandidate))
+                            if (!FreshTFSWorkItems[ProjName].Exists(P => P.Id == DeletionCandidate.Id))
                             {
                                 //Remove from client side
-                                ////GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
+                                TFSPocoWorkItems[ProjName].Remove(DeletionCandidate.Id);
+                                GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.removeWorkItem(TFSPocoWorkItems[ProjName][DeletionCandidate.Id]);
                             }
                         }
                         //Add new Work Items Loop.
                         foreach (WorkItem result in nextresults)
                         {
-                            GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.newMessage(string.Concat("One Work Item Found. ", result.ToString()));   
                             //If the WorkItem doesnt exist in the current Collection, add it and update clients.
                             if (!TFSWorkItems[ProjName].Contains(result))
                             {
                                 //Method for updating clients will have to be added.
-                                //GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addNewWorkItemToPage(string.Concat("A query has timed out:", e.SignalTime));
+                                TFSPocoWorkItems[ProjName].Add(result.Id, new PocoWorkItem(result, ProjName));
+                                GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.addWorkItem(TFSPocoWorkItems[ProjName][result.Id]);
                             }
                         }
                         //Now that Clients have been Diff'd replace the WorkItemList
