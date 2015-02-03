@@ -19,7 +19,7 @@
     <div id="workitemlist" class="col-xs-12">
         <div id="WorkItemProject" class="row">
             <h2>Filters</h2>
-            <input ng-model="search.$" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
+            <input ng-model="search" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
             <table class="table">
                 <tr style="background-color:#00A4E4">
                     <th>ID</th>
@@ -30,7 +30,7 @@
                     <th>Title</th>
                     <th><!--Button--></th>
                 </tr>
-                <tr ng-repeat-start="workitem in workitems | filter:filterByText" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
+                <tr ng-repeat-start="workitem in workitems | customFilter" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
@@ -79,7 +79,21 @@
     <script>
         $(function () {
             ////Angular Section - Create the Application And Controler
-            angular.module('app', []).controller('mainCtrl', function ($scope, chat) {
+            var app = angular.module('app', []).filter('customFilter', function(){
+                return function (items) { 
+                    var filtered = [];
+                    angular.forEach(items, function(item){
+                        for (var index in item) {
+                            if (index.indexOf(search) > -1) {
+                                //String was found, return true
+                                filtered.push(item);
+                                break
+                            }
+                        }                        
+                    });
+                    return filtered;
+                };
+            }).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
                 $scope.workitems = {};
                 $scope.toggledworkitems = {};
@@ -157,6 +171,9 @@
             angular.module('app').value('chat', $.connection.chat);
             angular.bootstrap(document, ['app']);
         });
+
+
+
         // This optional function html-encodes messages for display in the page.
         function htmlEncode(value) {
             var encodedValue = $('<div />').text(value).html();
