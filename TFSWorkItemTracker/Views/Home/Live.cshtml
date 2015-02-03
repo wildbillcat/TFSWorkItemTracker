@@ -19,7 +19,7 @@
     <div id="workitemlist" class="col-xs-12">
         <div id="WorkItemProject" class="row">
             <h2>Filters</h2>
-            <input ng-model="search" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
+            <input id="SearchFilter" ng-model="search" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
             <table class="table">
                 <tr style="background-color:#00A4E4">
                     <th>ID</th>
@@ -79,18 +79,19 @@
     <script>
         $(function () {
             ////Angular Section - Create the Application And Controler
-            var app = angular.module('app', []).filter('customFilter', function(){
+            var app = angular.module('app', []).filter('customFilter', function () {
+                var filter = document.getElementById("SearchFilter").value
                 return function (items) { 
                     var filtered = [];
-                    angular.forEach(items, function(item){
+                    for (var item in items) {
                         for (var index in item) {
-                            if (index.indexOf(search) > -1) {
+                            if (index.indexOf(filter) > -1) {
                                 //String was found, return true
                                 filtered.push(item);
                                 break
                             }
-                        }                        
-                    });
+                        }
+                    }
                     return filtered;
                 };
             }).controller('mainCtrl', function ($scope, chat) {
