@@ -30,7 +30,7 @@ namespace TFSWorkItemTracker.Models
             Title = WI.Title;
             Collection = collection.Split('\\')[1];
             Uri = WI.Uri.AbsoluteUri;
-            Toggler = "void";
+            Toggler = "false";
         }
     }
 }

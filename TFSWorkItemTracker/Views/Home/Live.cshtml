@@ -26,23 +26,23 @@
                     <th>Changed Date</th>
                     <th>Title</th>
                 </tr>
-                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'" ng-class="{'toggled': $scope.toggledworkitems[workitem.JsonId]==workitem}">
+                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
                     <td>{{workitem.State}}</td>
                     <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td>{{workitem.Title}}</td>
-                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" ng-if="$scope.toggledworkitems[workitem.JsonId]!=workitem" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
                 </tr>
-                <tr ng-repeat-end="workitem in workitems" class="toggled">
+                <tr ng-repeat-end="workitem in workitems" class="toggled" ng-if="workitem.Toggler!='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
                     <td>{{workitem.State}}</td>
                     <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td>{{workitem.Title}}</td>
-                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" ng-if="$scope.toggledworkitems[workitem.JsonId]==workitem" class="pull-right btn btn-primary btn-sm">Untoggle</button></td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" class="pull-right btn btn-primary btn-sm">{{workitem.Toggler}}</button></td>
                 </tr>
             </table>
         </div>
@@ -123,18 +123,6 @@
                     var chatDiv = document.getElementById("chatDiv");
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                     console.log(message);
-                };
-
-                chat.client.toggleWorkItem = function onToggleWorkItem(workitem) {
-                    alert("Continue Toggle!");
-                    if (typeof arrayName[workitem.JsonId] == 'undefined') {
-                        // does not exist
-                        $scope.toggledworkitems[workitem.JsonId] = workitem;
-                    }
-                    else {
-                        // does exist
-                        delete $scope.toggledworkitems[workitem.JsonId];
-                    }                    
                 };
 
                 chat.client.addWorkItem = function onAddWorkItem(workitem) {

@@ -173,8 +173,7 @@ namespace TFSWorkItemTracker.Hubs
                         //Deletion Loop
                         foreach (int RemovalKey in Deletion)
                         {
-                            TFSPocoWorkItems[ProjName].Remove(RemovalKey);
-                            
+                            TFSPocoWorkItems[ProjName].Remove(RemovalKey);                            
                         }
 
                         //Add new Work Items Loop.
@@ -203,7 +202,13 @@ namespace TFSWorkItemTracker.Hubs
         {
             lock (TimerEventLock)
             {
-                
+                if(TFSPocoWorkItems[Collection][Id].Toggler.Equals("false")){
+                    TFSPocoWorkItems[Collection][Id].Toggler = Context.User.Identity.Name;
+                    Clients.All.updateWorkItem(TFSPocoWorkItems[Collection][Id]);
+                }else{
+                    TFSPocoWorkItems[Collection][Id].Toggler = "false";
+                    Clients.All.updateWorkItem(TFSPocoWorkItems[Collection][Id]);
+                }
             }
         }
 
@@ -223,14 +228,7 @@ namespace TFSWorkItemTracker.Hubs
                         Clients.Client(Context.ConnectionId).addWorkItem(WI);
                     }
                 }
-            }
-            lock (ToggleLock)
-            {
-                foreach (string TWorkItem in ToggledWorkItems.Values)
-                {
-                    Clients.Client(Context.ConnectionId).toggleWorkItem(TWorkItem);
-                }
-            }
+            }            
             return base.OnConnected();
         }
     }
