@@ -16,7 +16,7 @@
     </div>
     <div id="Filters">
         <h2>Filters</h2>
-        <input ng-model="searchFilter" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
+        <input ng-model="search.$" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
         <!--<input type="checkbox" value="State is New" />-->
     </div>
     <!--This Div holds the work items sent by the server-->
@@ -32,7 +32,7 @@
                     <th>Title</th>
                     <th><!--Button--></th>
                 </tr>
-                <tr ng-repeat-start="workitem in workitems | filter:searchFilter" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
+                <tr ng-repeat-start="workitem in workitems | filter:search" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
