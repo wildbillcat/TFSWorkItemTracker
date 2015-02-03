@@ -93,7 +93,7 @@
                         var keystwo = Object.getOwnPropertyNames(items[keys[key]]);
                         for (keytwo in keystwo) {                            
                             console.log(items[keys[key]][keystwo[keytwo]])
-                            if (String(items[keys[key]][keystwo[keytwo]]).indexOf(filter)) {
+                            if (String(items[keys[key]][keystwo[keytwo]]).indexOf(filter) > -1) {
                                 filtered[keys[key]] = items[keys[key]];
                             }
                         }                        
