@@ -17,6 +17,7 @@ namespace TFSWorkItemTracker.Models
         public string Title;
         public string Collection;
         public string Uri;
+        public string Toggler;
 
         public PocoWorkItem(WorkItem WI, string collection)
         {
@@ -29,6 +30,7 @@ namespace TFSWorkItemTracker.Models
             Title = WI.Title;
             Collection = collection.Split('\\')[1];
             Uri = WI.Uri.AbsoluteUri;
+            Toggler = "void";
         }
     }
 }

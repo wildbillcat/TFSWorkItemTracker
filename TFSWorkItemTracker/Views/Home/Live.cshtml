@@ -26,15 +26,23 @@
                     <th>Changed Date</th>
                     <th>Title</th>
                 </tr>
-                <tr ng-repeat="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'" ng-class="{'toggled': $scope.toggledworkitems[workitem.JsonId]==workitem}">
+                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'" ng-class="{'toggled': $scope.toggledworkitems[workitem.JsonId]==workitem}">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
                     <td>{{workitem.State}}</td>
                     <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td>{{workitem.Title}}</td>
-                    <td><button ng-click="toggleWorkItem(workitem)" ng-if="$scope.toggledworkitems[workitem.JsonId]==workitem" class="pull-right btn btn-primary btn-sm">Untoggle</button></td>
-                    <td><button ng-click="toggleWorkItem(workitem)" ng-if="$scope.toggledworkitems[workitem.JsonId]!=workitem" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" ng-if="$scope.toggledworkitems[workitem.JsonId]!=workitem" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
+                </tr>
+                <tr ng-repeat-end="workitem in workitems" class="toggled">
+                    <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
+                    <td>{{workitem.Collection}}</td>
+                    <td>{{workitem.Project}}</td>
+                    <td>{{workitem.State}}</td>
+                    <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td>{{workitem.Title}}</td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" ng-if="$scope.toggledworkitems[workitem.JsonId]==workitem" class="pull-right btn btn-primary btn-sm">Untoggle</button></td>
                 </tr>
             </table>
         </div>
@@ -101,9 +109,9 @@
                     $scope.newMessage = "";
                 };
 
-                $scope.toggleWorkItem = function (workitem) {
+                $scope.toggleWorkItem = function (workitemjsonid) {
                     alert("Start Toggle!");
-                    chat.server.toggle(workitem);
+                    chat.server.toggle($scope.toggledworkitems[workitem.JsonId].Collection, $scope.toggledworkitems[workitem.JsonId].Id);
                 };
 
                 //Server Side

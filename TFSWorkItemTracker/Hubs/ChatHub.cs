@@ -42,7 +42,7 @@ namespace TFSWorkItemTracker.Hubs
 
         static Object ToggleLock = new Object();
 
-        static Dictionary<string, PocoWorkItem> ToggledWorkItems = new Dictionary<string, PocoWorkItem>();
+        static Dictionary<string, string> ToggledWorkItems = new Dictionary<string, string>();
 
         public ChatHub() : base()
         {
@@ -162,6 +162,7 @@ namespace TFSWorkItemTracker.Hubs
                                     {
                                         if (ToggledWorkItems.ContainsKey(DeletionCandidate.JsonId))
                                         {
+                                            ToggledWorkItems.Remove(DeletionCandidate.JsonId);
                                             GlobalHost.ConnectionManager.GetHubContext<ChatHub>().Clients.All.toggleWorkItem(DeletionCandidate.JsonId);
                                         }
                                     }
@@ -198,21 +199,11 @@ namespace TFSWorkItemTracker.Hubs
             Clients.All.newMessage(string.Concat(Context.User.Identity.Name, ":", message));
         }
 
-        public void Toggle(PocoWorkItem ToggleItem)
+        public void Toggle(string Collection, int Id)
         {
-            lock (ToggleLock)
+            lock (TimerEventLock)
             {
-                //exists - Thus untoggle
-                if (ToggledWorkItems.ContainsKey(ToggleItem.JsonId))
-                {
-                    ToggledWorkItems.Remove(ToggleItem.JsonId);
-                    Clients.All.toggleWorkItem(ToggleItem);
-                }
-                else
-                {
-                    ToggledWorkItems.Add(ToggleItem.JsonId, ToggleItem);
-                    Clients.All.toggleWorkItem(ToggleItem);
-                }
+                
             }
         }
 
@@ -235,7 +226,7 @@ namespace TFSWorkItemTracker.Hubs
             }
             lock (ToggleLock)
             {
-                foreach (PocoWorkItem TWorkItem in ToggledWorkItems.Values)
+                foreach (string TWorkItem in ToggledWorkItems.Values)
                 {
                     Clients.Client(Context.ConnectionId).toggleWorkItem(TWorkItem);
                 }
