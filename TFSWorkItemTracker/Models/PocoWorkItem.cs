@@ -22,7 +22,8 @@ namespace TFSWorkItemTracker.Models
         public PocoWorkItem(WorkItem WI, string collection)
         {
             Id = WI.Id;
-            JsonId = string.Concat(collection, WI.Id.ToString());
+            // } is used as a delimiter to allow parseing of id and collection
+            JsonId = string.Concat(collection, "}",WI.Id.ToString());
             Project = WI.Project.Name;
             State = WI.State;
             ChangedDate = WI.ChangedDate;

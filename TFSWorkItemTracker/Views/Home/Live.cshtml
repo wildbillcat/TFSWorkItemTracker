@@ -110,8 +110,8 @@
                 };
 
                 $scope.toggleWorkItem = function (workitemjsonid) {
-                    alert("Start Toggle! :workitemjsonid");
-                    chat.server.toggle($scope.toggledworkitems[workitemjsonid].Collection, $scope.toggledworkitems[workitemjsonid].Id);
+                    alert(workitemjsonid);
+                    chat.server.toggle(workitemjsonid);
                 };
 
                 //Server Side

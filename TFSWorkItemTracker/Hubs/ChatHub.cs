@@ -198,8 +198,11 @@ namespace TFSWorkItemTracker.Hubs
             Clients.All.newMessage(string.Concat(Context.User.Identity.Name, ":", message));
         }
 
-        public void Toggle(string Collection, int Id)
+        public void Toggle(string WorkItemJsonId)
         {
+            string[] Item = WorkItemJsonId.Split('}');
+            string Collection = Item[0];
+            int Id = int.Parse(Item[1]);
             lock (TimerEventLock)
             {
                 if(TFSPocoWorkItems[Collection][Id].Toggler.Equals("false")){
