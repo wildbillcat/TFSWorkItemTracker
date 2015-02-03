@@ -10,7 +10,7 @@
             <div ng-repeat="msg in messages">{{msg.message}}</div>
         </div>
         <div>
-            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="chat message" />
+            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:50%" type="text" placeholder="chat message" />
             <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
         </div>
     </div>
@@ -93,7 +93,7 @@
                         var keystwo = Object.getOwnPropertyNames(items[keys[key]]);
                         for (keytwo in keystwo) {                            
                             console.log(items[keys[key]][keystwo[keytwo]])
-                            if (items[keys[key]][keystwo[keytwo]].indexOf(filter)) {
+                            if (String(items[keys[key]][keystwo[keytwo]]).indexOf(filter)) {
                                 filtered[keys[key]] = items[keys[key]];
                             }
                         }                        
