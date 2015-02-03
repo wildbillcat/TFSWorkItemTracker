@@ -26,7 +26,7 @@
                     <th>Changed Date</th>
                     <th>Title</th>
                 </tr>
-                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'">
+                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
@@ -110,7 +110,6 @@
                 };
 
                 $scope.toggleWorkItem = function (workitemjsonid) {
-                    alert(workitemjsonid);
                     chat.server.toggle(workitemjsonid);
                 };
 
