@@ -80,20 +80,24 @@
         $(function () {
             ////Angular Section - Create the Application And Controler
             var app = angular.module('app', []).filter('customFilter', function () {
-                var filter = document.getElementById("SearchFilter").value
-                return function (items) { 
-                    var filtered = [];
+                return function (items) {
+                    var filter = document.getElementById("SearchFilter").value
+                    var filtered = {};
+                    //If nothing has been entered, then show all
+                    if (filter == "") {
+                        return items;
+                    }
                     for (var item in items) {
                         for (var index in item) {
                             if (index.indexOf(filter) > -1) {
                                 //String was found, return true
-                                filtered.push(item);
+                                filtered[item.JsonId] = item;
                                 break
                             }
                         }
                     }
                     return filtered;
-                };
+                }
             }).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
                 $scope.workitems = {};
