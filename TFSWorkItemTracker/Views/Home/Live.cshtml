@@ -14,6 +14,11 @@
             <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
         </div>
     </div>
+    <div id="Filters">
+        <h2>Filters</h2>
+        <input type="text" ng-model="workItemSearch" class="form-control input-sm pull-left" style="width:240px;" />
+        <input type="checkbox" value="State is New" />
+    </div>
     <!--This Div holds the work items sent by the server-->
     <div id="workitemlist" class="col-xs-12">
         <div id="WorkItemProject" class="row">
@@ -26,7 +31,7 @@
                     <th>Changed Date</th>
                     <th>Title</th>
                 </tr>
-                <tr ng-repeat-start="workitem in workitems" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
+                <tr ng-repeat-start="workitem in workitems | filter:workItemSearch" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
@@ -35,7 +40,7 @@
                     <td>{{workitem.Title}}</td>
                     <td><button ng-click="toggleWorkItem(workitem.JsonId)" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
                 </tr>
-                <tr ng-repeat-end="workitem in workitems" class="toggled" ng-if="workitem.Toggler!='false'">
+                <tr ng-repeat-end class="toggled" ng-if="workitem.Toggler!='false'">
                     <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
                     <td>{{workitem.Collection}}</td>
                     <td>{{workitem.Project}}</td>
@@ -75,20 +80,7 @@
     <script>
         $(function () {
             ////Angular Section - Create the Application And Controler
-            angular.module('app', []).filter('reverse', function () {
-                return function (input, uppercase) {
-                    input = input || '';
-                    var out = "";
-                    for (var i = 0; i < input.length; i++) {
-                        out = input.charAt(i) + out;
-                    }
-                    // conditional based on optional argument
-                    if (uppercase) {
-                        out = out.toUpperCase();
-                    }
-                    return out;
-                };
-            }).controller('mainCtrl', function ($scope, chat) {
+            angular.module('app', []).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
                 $scope.workitems = {};
                 $scope.toggledworkitems = {};
