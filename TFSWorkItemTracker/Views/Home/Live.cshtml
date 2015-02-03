@@ -87,13 +87,10 @@
                     if (filter == "") {
                         return items;
                     }
-                    for (var item in items) {
-                        for (var index in items[item]) {
-                            if (item[index].indexOf(filter) > -1) {
-                                //String was found, return true
-                                filtered[item.JsonId] = items[item];
-                                break
-                            }
+                    var keys = Object.getOwnPropertyNames(items);
+                    alert(keys);
+                    for (var key in keys) {
+                            filtered[item.JsonId] = items[key];
                         }
                     }
                     return filtered;
