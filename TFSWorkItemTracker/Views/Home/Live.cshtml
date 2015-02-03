@@ -14,14 +14,12 @@
             <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
         </div>
     </div>
-    <div id="Filters">
-        <h2>Filters</h2>
-        <input ng-model="search.$" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
-        <!--<input type="checkbox" value="State is New" />-->
-    </div>
+    
     <!--This Div holds the work items sent by the server-->
     <div id="workitemlist" class="col-xs-12">
         <div id="WorkItemProject" class="row">
+            <h2>Filters</h2>
+            <input ng-model="search.$" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
             <table class="table">
                 <tr style="background-color:#00A4E4">
                     <th>ID</th>
