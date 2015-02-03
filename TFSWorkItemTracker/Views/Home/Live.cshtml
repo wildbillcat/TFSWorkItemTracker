@@ -87,11 +87,12 @@
                     if (filter == "") {
                         return items;
                     }
-                    var keys = Object.getOwnPropertyNames(items);
+                    var keys = []
+                    keys = Object.getOwnPropertyNames(items);
                     alert(keys);
                     for (var key in keys) {
-                            filtered[item.JsonId] = items[key];
-                        }
+                        filtered[item.JsonId] = items[key];
+                    }
                     return filtered;
                 }
             }).controller('mainCtrl', function ($scope, chat) {
