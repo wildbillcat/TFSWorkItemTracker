@@ -89,9 +89,8 @@
                     }
                     var keys = []
                     keys = Object.getOwnPropertyNames(items);
-                    alert(keys);
                     for (var key in keys) {
-                        filtered[item.JsonId] = items[key];
+                        filtered[keys[key]] = items[keys[key]];
                     }
                     return filtered;
                 }
