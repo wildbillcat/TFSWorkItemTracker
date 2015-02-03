@@ -10,7 +10,7 @@
             <div ng-repeat="msg in messages">{{msg.message}}</div>
         </div>
         <div>
-            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:50%" type="text" placeholder="chat message" />
+            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:90%" type="text" placeholder="chat message" />
             <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
         </div>
     </div>
@@ -19,7 +19,7 @@
     <div id="workitemlist" class="col-xs-12">
         <div id="WorkItemProject" class="row">
             <h2>Filters</h2>
-            <input id="SearchFilter" ng-model="search" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="filter" />
+            <input id="SearchFilter" ng-model="search" class="form-control input-sm pull-left" style="width:40%" type="text" placeholder="filter" />
             <table class="table">
                 <tr style="background-color:#00A4E4">
                     <th>ID</th>
