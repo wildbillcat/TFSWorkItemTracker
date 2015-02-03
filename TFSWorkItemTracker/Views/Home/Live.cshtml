@@ -88,10 +88,10 @@
                         return items;
                     }
                     for (var item in items) {
-                        for (var index in item) {
-                            if (index.indexOf(filter) > -1) {
+                        for (var index in items[item]) {
+                            if (item[index].indexOf(filter) > -1) {
                                 //String was found, return true
-                                filtered[item.JsonId] = item;
+                                filtered[item.JsonId] = items[item];
                                 break
                             }
                         }
@@ -104,18 +104,7 @@
                 $scope.toggledworkitems = {};
 
                 //Client Side
-
-                //Filtermethod for finding text in associative array
-                $scope.filterByText = function (workitem) {
-                    for (var index in workitem) {
-                        if (index.indexOf(search) > -1) {
-                            //String was found, return true
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-
+            
                 //Allows for enter key to be used to send messages
                 $scope.keyPress = function onKeyPress($event) {
                     //13 is the enter key
