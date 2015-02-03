@@ -90,6 +90,10 @@
                     var keys = []
                     keys = Object.getOwnPropertyNames(items);
                     for (var key in keys) {
+                        var keystwo = Object.getOwnPropertyNames(items[keys[key]]);
+                        for (keytwo in keystwo) {
+                            console.log(items[keys[key]][keystwo[keytwo]])
+                        }
                         filtered[keys[key]] = items[keys[key]];
                     }
                     return filtered;
