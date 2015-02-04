@@ -21,8 +21,7 @@ namespace TFSWorkItemTracker.Hubs
         
         //This string maintains the state of the timer log since application start. Just a Proof of concept to later be replaced by workitems.
         static List<string> TimerLog = new List<string>();
-        //Stores a list of WorkItems found by the Query
-        //*******************static Dictionary<string, List<WorkItem>> TFSWorkItems = new Dictionary<string, List<WorkItem>>();
+        //Stores a list of WorkItems found by the Query        
         static Dictionary<string, Dictionary<int, PocoWorkItem>> TFSPocoWorkItems = new Dictionary<string, Dictionary<int, PocoWorkItem>>();
         
         //Stores a list of URIs to access the Work items in TFS
@@ -64,10 +63,6 @@ namespace TFSWorkItemTracker.Hubs
                     {
                         TfsProjectCollections.Add(Team.Name, Team);
                     }
-                    /*if (!TFSWorkItems.ContainsKey(Team.Name))
-                    {
-                        TFSWorkItems.Add(Team.Name, new List<WorkItem>());
-                    }*/
                     if (!TFSServerQuerys.ContainsKey(Team.Name))
                     {
                         TFSServerQuerys.Add(Team.Name, new Query((WorkItemStore)Team.GetService(typeof(WorkItemStore)), TFSServerQuery));
@@ -98,7 +93,6 @@ namespace TFSWorkItemTracker.Hubs
         static private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {          
             //This holds the results from the queries. Blocking collection allows for queries to be handled in multiple threads
-            //******Dictionary<string, List<WorkItem>> FreshTFSWorkItems = new Dictionary<string, List<WorkItem>>();
             //Start all of the queries against the server (Async)
             Dictionary<string, ICancelableAsyncResult> CallBacks = new Dictionary<string, ICancelableAsyncResult>();
 
@@ -106,7 +100,6 @@ namespace TFSWorkItemTracker.Hubs
             foreach (string ProjectName in TFSServerQuerys.Keys)
             {
                 CallBacks.Add(ProjectName, TFSServerQuerys[ProjectName].BeginQuery());
-                //**************FreshTFSWorkItems.Add(ProjectName, new List<WorkItem>());
             }
             //Read Only Query Section
             Parallel.ForEach(CallBacks.Keys, ProjName =>
@@ -118,8 +111,7 @@ namespace TFSWorkItemTracker.Hubs
             //If this happens on a regular basis this is an issue, and the timer should be adjusted accordingly.
             lock (TimerEventLock)
             {
-                //Now wait on all the queries and pull all the results of successfull queries
-                //foreach(string ProjName in CallBacks.Keys)
+                //Now wait on all the queries and pull all the results of successfull queries                
                 Parallel.ForEach(CallBacks.Keys, ProjName =>
                 {
                     if (!CallBacks[ProjName].IsCompleted)
