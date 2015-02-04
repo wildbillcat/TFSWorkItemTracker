@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Web.UI;//Excel
+using System.Web.UI.WebControls;//Excel
 using System.Web.Mvc;
-using System.IO;
-using System.Data;
+using System.IO;//Excel
+using System.Data;//Excel
+using Microsoft.TeamFoundation.Client;//tfs
+using Microsoft.TeamFoundation.WorkItemTracking.Client;//tfs
 
 namespace TFSWorkItemTracker.Controllers
 {
@@ -19,10 +21,13 @@ namespace TFSWorkItemTracker.Controllers
 
         public ActionResult Live()
         {
+            List<WorkItem> WorkItems = new List<WorkItem>();
+
             return View();
         }
 
-        public ActionResult Report()
+        //All if the bools represent different states
+        public ActionResult Report(DateTime? StartDate, DateTime? EndDate, string? contains, bool? New, bool? Approved, bool? Committed, bool? Done, bool? Removed)
         {
             return View();
         }
