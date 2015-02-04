@@ -20,6 +20,14 @@
         <div id="WorkItemProject" class="row">
             <h2>Filters</h2>
             <input id="SearchFilter" ng-model="search" class="form-control input-sm pull-left" style="width:40%" type="text" placeholder="filter" />
+            <select style="margin-left: 20px; width: 20%;" id="stateToggle" ng-model="workitem.State">
+                <option value="">All</option>
+                <option value="">New</option>
+                <option value="">Approved</option>
+                <option value="">Committed</option>
+                <option value="">Done</option>
+                <option value="">Removed</option>
+            </select>
             <table class="table">
                 <tr style="background-color:#00A4E4">
                     <th>ID</th>
@@ -81,20 +89,37 @@
             ////Angular Section - Create the Application And Controler
             var app = angular.module('app', []).filter('customFilter', function () {
                 return function (items) {
+
+                    //This Section filters based on the dropdown
+                    var e = document.getElementById("stateToggle");
+                    var selected = e.options[e.selectedIndex].text;
+                    selection = {};
+                    if (selected == "All") {
+                        selection = items;
+                    } else {
+                        keys = Object.getOwnPropertyNames(items);
+                        for (var key in keys) {                            
+                            if (String(items[keys[key]].State) == selected) {
+                                selection[keys[key]] = items[keys[key]];
+                            }
+                        }
+                    }
+
+                    //This Section filters based on text in the search box
                     var filter = document.getElementById("SearchFilter").value
                     var filtered = {};
                     //If nothing has been entered, then show all
                     if (filter == "") {
-                        return items;
+                        return selection;
                     }
                     var keys = []
-                    keys = Object.getOwnPropertyNames(items);
+                    keys = Object.getOwnPropertyNames(selection);
                     for (var key in keys) {
-                        var keystwo = Object.getOwnPropertyNames(items[keys[key]]);
+                        var keystwo = Object.getOwnPropertyNames(selection[keys[key]]);
                         for (keytwo in keystwo) {                            
-                            console.log(items[keys[key]][keystwo[keytwo]])
-                            if (String(items[keys[key]][keystwo[keytwo]]).indexOf(filter) > -1) {
-                                filtered[keys[key]] = items[keys[key]];
+                            console.log(selection[keys[key]][keystwo[keytwo]])
+                            if (String(selection[keys[key]][keystwo[keytwo]]).indexOf(filter) > -1) {
+                                filtered[keys[key]] = selection[keys[key]];
                             }
                         }                        
                     }
