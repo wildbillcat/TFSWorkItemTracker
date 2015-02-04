@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Optimization;
 
-namespace TSFWorkItemTracker
+namespace TFSWorkItemTracker
 {
     public class BundleConfig
     {

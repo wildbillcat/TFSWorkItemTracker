@@ -3,20 +3,76 @@
 }
 
 <h2>Live Monitor</h2>
-
-<!--This Div hold the Chat application, used to both communicate amongst the teams and post system notifications-->
-<div ng-controller="mainCtrl" class="chatConsole">
-    <div id="chatDiv" class="scrollable" style="height : 100px; overflow-y: auto;">
-        <div ng-repeat="msg in messages">{{msg.message}}</div>
+<div id="AngularApp" ng-controller="mainCtrl">
+    <!--This Div hold the Chat application, used to both communicate amongst the teams and post system notifications-->
+    <div class="chatConsole">
+        <div id="chatDiv" class="scrollable" style="height : 100px; overflow-y: auto;">
+            <div ng-repeat="msg in messages">{{msg.message}}</div>
+        </div>
+        <div>
+            <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:90%" type="text" placeholder="chat message" />
+            <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
+        </div>
     </div>
-    <div>
-        <input ng-model="newMessage" ng-keypress="keyPress($event)" class="form-control input-sm pull-left" style="width:80%" type="text" placeholder="chat message" />
-        <button ng-click="sendMessage()" class="pull-right btn btn-primary btn-sm">Send</button>
+    
+    <!--This Div holds the work items sent by the server-->
+    <div id="workitemlist" class="col-xs-12">
+        <div id="WorkItemProject" class="row">
+            <h2>Filters</h2>
+            <input id="SearchFilter" ng-model="search" class="form-control input-sm pull-left" style="width:40%" type="text" placeholder="filter" />
+            <select style="margin-left: 20px; width: 20%;" id="stateToggle" ng-model="workitem.State">
+                <option value="">All</option>
+                <option value="">New</option>
+                <option value="">Approved</option>
+                <option value="">Committed</option>
+                <option value="">Done</option>
+                <option value="">Removed</option>
+            </select>
+            <table class="table">
+                <tr style="background-color:#00A4E4">
+                    <th>ID</th>
+                    <th>Collection</th>
+                    <th>Team Project</th>
+                    <th>State</th>
+                    <th>Changed Date</th>
+                    <th>Title</th>
+                    <th><!--Button--></th>
+                </tr>
+                <tr ng-repeat-start="workitem in workitems | customFilter" ng-class-odd="'odd'" ng-class-even="'even'" ng-if="workitem.Toggler=='false'">
+                    <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
+                    <td>{{workitem.Collection}}</td>
+                    <td>{{workitem.Project}}</td>
+                    <td>{{workitem.State}}</td>
+                    <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td>{{workitem.Title}}</td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" class="pull-right btn btn-primary btn-sm">Toggle</button></td>
+                </tr>
+                <tr ng-repeat-end class="toggled" ng-if="workitem.Toggler!='false'">
+                    <td><a href="{{workitem.Uri}}">{{workitem.Id}}</a></td>
+                    <td>{{workitem.Collection}}</td>
+                    <td>{{workitem.Project}}</td>
+                    <td>{{workitem.State}}</td>
+                    <td>{{workitem.ChangedDate | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td>{{workitem.Title}}</td>
+                    <td><button ng-click="toggleWorkItem(workitem.JsonId)" class="pull-right btn btn-primary btn-sm">{{workitem.Toggler}}</button></td>
+                </tr>
+            </table>
+        </div>
     </div>
 </div>
+<style>
+    .even{
+        background-color: #EFF3FB;
+    }
 
-<!--This Div holds the work items sent by the server-->
-<div id="workitems" class="col-xs-12"></div>
+    .odd{
+        background-color: white;
+    }
+
+    .toggled{
+        background-color: red;
+    }
+</style>
 
 @section scripts {
     <!--Script references. -->
@@ -31,11 +87,52 @@
     <script>
         $(function () {
             ////Angular Section - Create the Application And Controler
-            angular.module('app', []).controller('mainCtrl', function ($scope, chat) {
+            var app = angular.module('app', []).filter('customFilter', function () {
+                return function (items) {
+
+                    //This Section filters based on the dropdown
+                    var e = document.getElementById("stateToggle");
+                    var selected = e.options[e.selectedIndex].text;
+                    selection = {};
+                    if (selected == "All") {
+                        selection = items;
+                    } else {
+                        keys = Object.getOwnPropertyNames(items);
+                        for (var key in keys) {                            
+                            if (String(items[keys[key]].State) == selected) {
+                                selection[keys[key]] = items[keys[key]];
+                            }
+                        }
+                    }
+
+                    //This Section filters based on text in the search box
+                    var filter = document.getElementById("SearchFilter").value
+                    var filtered = {};
+                    //If nothing has been entered, then show all
+                    if (filter == "") {
+                        return selection;
+                    }
+                    var keys = []
+                    keys = Object.getOwnPropertyNames(selection);
+                    for (var key in keys) {
+                        var keystwo = Object.getOwnPropertyNames(selection[keys[key]]);
+                        for (keytwo in keystwo) {                            
+                            console.log(selection[keys[key]][keystwo[keytwo]])
+                            if (String(selection[keys[key]][keystwo[keytwo]]).indexOf(filter) > -1) {
+                                filtered[keys[key]] = selection[keys[key]];
+                            }
+                        }                        
+                    }
+                    return filtered;
+                }
+            }).controller('mainCtrl', function ($scope, chat) {
                 $scope.messages = [];
-                $scope.workitems = [{"demo":[]}];
+                $scope.workitems = {};
+                $scope.toggledworkitems = {};
 
-
+                //Client Side
+            
+                //Allows for enter key to be used to send messages
                 $scope.keyPress = function onKeyPress($event) {
                     //13 is the enter key
                     if ($event.keyCode == 13) {
@@ -43,11 +140,19 @@
                     }
                 };
 
+                //Sends message to server
                 $scope.sendMessage = function () {
                     chat.server.send($scope.newMessage);
                     $scope.newMessage = "";
                 };
 
+                $scope.toggleWorkItem = function (workitemjsonid) {
+                    chat.server.toggle(workitemjsonid);
+                };
+
+                //Server Side
+
+                //Adds a new message to chat window
                 chat.client.newMessage = function onNewMessage(message) {
                     $scope.messages.push({ message: message });
                     $scope.$apply();
@@ -55,6 +160,24 @@
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                     console.log(message);
                 };
+
+                chat.client.addWorkItem = function onAddWorkItem(workitem) {
+                    $scope.workitems[workitem.JsonId] = workitem;
+                    $scope.$apply();
+                    console.log(workitem);
+                }
+
+                chat.client.removeWorkItem = function onRemoveWorkItem(workitem) {
+                    delete $scope.workitems[workitem.JsonId];
+                    $scope.$apply();
+                    console.log(workitem);
+                }
+
+                chat.client.updateWorkItem = function onUpdateWorkItem(workitem) {
+                    $scope.workitems[workitem.JsonId] = workitem;
+                    $scope.$apply();
+                    console.log(workitem);
+                }
             });
             
             // Start the connection.
@@ -69,6 +192,9 @@
             angular.module('app').value('chat', $.connection.chat);
             angular.bootstrap(document, ['app']);
         });
+
+
+
         // This optional function html-encodes messages for display in the page.
         function htmlEncode(value) {
             var encodedValue = $('<div />').text(value).html();
