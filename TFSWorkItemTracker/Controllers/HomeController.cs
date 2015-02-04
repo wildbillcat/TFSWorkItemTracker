@@ -9,6 +9,7 @@ using System.IO;//Excel
 using System.Data;//Excel
 using Microsoft.TeamFoundation.Client;//tfs
 using Microsoft.TeamFoundation.WorkItemTracking.Client;//tfs
+using PagedList;
 
 namespace TFSWorkItemTracker.Controllers
 {
@@ -21,14 +22,22 @@ namespace TFSWorkItemTracker.Controllers
 
         public ActionResult Live()
         {
-            List<WorkItem> WorkItems = new List<WorkItem>();
-
             return View();
         }
 
         //All if the bools represent different states
-        public ActionResult Report(DateTime? StartDate, DateTime? EndDate, string? contains, bool? New, bool? Approved, bool? Committed, bool? Done, bool? Removed)
+        public ActionResult Report(int? page, DateTime? StartDate, DateTime? EndDate, string currentFilter, string searchString, bool? New, bool? Approved, bool? Committed, bool? Done, bool? Removed)
         {
+            List<WorkItem> WorkItems = new List<WorkItem>();
+            if (searchString != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            ViewBag.CurrentFilter = searchString;
             return View();
         }
 
