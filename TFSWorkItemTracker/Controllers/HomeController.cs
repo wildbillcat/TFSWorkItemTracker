@@ -38,6 +38,62 @@ namespace TFSWorkItemTracker.Controllers
                 searchString = currentFilter;
             }
             ViewBag.CurrentFilter = searchString;
+            DateTime QStartDate = (StartDate ?? DateTime.Now.AddDays(-30));
+            DateTime QEndDate = (EndDate ?? DateTime.Now);
+            bool QNew = (New ?? false);
+            bool QApproved = (Approved ?? false);
+            bool QCommitted = (Committed ?? false);
+            bool QDone = (Done ?? false);
+            bool QRemoved = (Removed ?? false);
+            if (QNew == QApproved == QCommitted == QDone == QRemoved == false)
+            {
+                QNew = true;
+                QApproved = true;
+                QCommitted = true;
+                QDone = true;
+                QRemoved = true;
+            }
+            ///Build Connection to TFS
+            List<Uri> ProjectCollectionUris = new List<Uri>();
+            //Fetch the list of uri to the tfs server(s) project collection(s)
+            //Parses comma delimited array of Uri
+            foreach (string CollectionURI in System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerUri").Split(','))
+            {
+                ProjectCollectionUris.Add(new Uri(CollectionURI.Trim()));
+            }
+            //This builds a list of project collections for querying later.
+            List<TfsTeamProjectCollection> TfsProjectCollections = new List<TfsTeamProjectCollection>();
+            foreach (Uri Location in ProjectCollectionUris)
+            {
+                TfsProjectCollections.Add(new TfsTeamProjectCollection(Location));
+            }
+            //Build Query
+            string TFSServerQuery = System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQuery"); //This needs to be changed
+            Dictionary<string, Query>  TFSServerQuerys = new Dictionary<string, Query>();
+            foreach (TfsTeamProjectCollection ProjectCollection in TfsProjectCollections)
+            {
+                TFSServerQuerys.Add(ProjectCollection.Name, new Query((WorkItemStore)ProjectCollection.GetService(typeof(WorkItemStore)), TFSServerQuery));
+            }
+            int TFSServerQueryTimeout = int.Parse(System.Configuration.ConfigurationManager.AppSettings.Get("TFSServerQueryTimeout"));
+            //Run Query to get all Workitems
+            Dictionary<string, ICancelableAsyncResult> CallBacks = new Dictionary<string, ICancelableAsyncResult>();
+            //Start the Async Queries
+            foreach (string ProjectName in TFSServerQuerys.Keys)
+            {
+                CallBacks.Add(ProjectName, TFSServerQuerys[ProjectName].BeginQuery());
+            }
+            Parallel.ForEach(CallBacks.Keys, ProjName =>
+            {
+                CallBacks[ProjName].AsyncWaitHandle.WaitOne(TFSServerQueryTimeout, false);
+            });
+
+
+
+
+
+
+            int pageSize = 30;
+            int pageNumber = (page ?? 1);
             return View();
         }
 
