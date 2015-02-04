@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace TFSWorkItemTracker
+namespace TSFWorkItemTracker
 {
     public class FilterConfig
     {
