@@ -1,7 +1,64 @@
-﻿@{
-    ViewBag.Title = "About";
+﻿﻿@using PagedList;
+@using PagedList.Mvc;
+@model PagedList.IPagedList<TFSWorkItemTracker.Models.PocoWorkItem>
+@{
+    ViewBag.Title = "Report";
 }
 <h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
 
-<p>Use this area to provide additional information.</p>
+@using (Html.BeginForm("Report", "Home", FormMethod.Get))
+{
+    <p>
+        Contains: @Html.TextBox("SearchString", ViewBag.CurrentFilter as string)
+        From Date: <input type="date" name="StartDate" value="@(ViewBag.bStartDate)">
+        To Date: <input type="date" name="EndDate" value="@(ViewBag.bEndDate)">
+        @Html.CheckBox("New", (bool)ViewBag.bNew)
+        @Html.CheckBox("Approved", (bool)ViewBag.bApproved)
+        @Html.CheckBox("Committed", (bool)ViewBag.bCommitted)
+        @Html.CheckBox("Done", (bool)ViewBag.bDone)
+        @Html.CheckBox("Removed", (bool)ViewBag.bRemoved)
+
+        
+        <input type="submit" value="Search" />
+    </p>
+}
+
+<table class="table">
+    <tr>
+        <th>ID</th>
+        <th>Collection</th>
+        <th>Team Project</th>
+        <th>State</th>
+        <th>Changed Date</th>
+        <th>Title</th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.Collection</td>
+            <td>@item.Project</td>
+            <td>@item.State</td>
+            <td>@item.ChangedDate</td>
+            <td>@item.Title</td>
+        </tr>
+    }
+</table>
+
+
+ Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+@Html.PagedListPager(Model, page => Url.Action("Report",
+                        new { page, currentFilter = ViewBag.CurrentFilter, StartDate = ViewBag.bStartDate, EndDate = ViewBag.bEndDate, New = ViewBag.bNew, Approved = ViewBag.bApproved, Committed = ViewBag.bCommitted, Done = ViewBag.bDone, Removed = ViewBag.bRemoved }))
+
+
+
+
+<script>
+		$(function() {
+			if (!Modernizr.inputtypes['date']) {
+				$('input[type=date]').datepicker({
+					dateFormat: 'yy-mm-dd'
+				});
+			}
+		});
+</script>
