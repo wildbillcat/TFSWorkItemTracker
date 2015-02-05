@@ -92,7 +92,7 @@ namespace TFSWorkItemTracker.Controllers
                     //Builds master list of Items to delete. For each loops do not reevaluate their index, so removing in the loop could cause issues.
                     foreach (WorkItem WI in results)
                     {
-                        WorkItems.Add(new PocoWorkItem(WI, WI.Project.Name));
+                        WorkItems.Add(new PocoWorkItem(WI, ProjectCollection.Name));
                     }
                 }
             });            
