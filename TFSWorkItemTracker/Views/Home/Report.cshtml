@@ -10,8 +10,8 @@
 {
     <p>
         Contains: @Html.TextBox("SearchString", ViewBag.CurrentFilter as string)
-        From Date: <input type="date" name="StartDate" value="@(ViewBag.bStartDate)">
-        To Date: <input type="date" name="EndDate" value="@(ViewBag.bEndDate)">
+        From Date: <input type="date" name="StartDate" value="@(ViewBag.bStartDate.ToString("d"))">
+        To Date: <input type="date" name="EndDate" value="@(ViewBag.bEndDate.ToString("d"))">
         New: @Html.CheckBox("New", (bool)ViewBag.bNew)
         | Approved: @Html.CheckBox("Approved", (bool)ViewBag.bApproved)
         | Committed: @Html.CheckBox("Committed", (bool)ViewBag.bCommitted)
@@ -57,7 +57,7 @@
 		$(function() {
 			if (!Modernizr.inputtypes['date']) {
 				$('input[type=date]').datepicker({
-					dateFormat: 'yy-mm-dd'
+				    dateFormat: 'mm/dd/yy'
 				});
 			}
 		});
