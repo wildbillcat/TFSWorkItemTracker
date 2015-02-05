@@ -12,11 +12,11 @@
         Contains: @Html.TextBox("SearchString", ViewBag.CurrentFilter as string)
         From Date: <input type="date" name="StartDate" value="@(ViewBag.bStartDate)">
         To Date: <input type="date" name="EndDate" value="@(ViewBag.bEndDate)">
-        @Html.CheckBox("New", (bool)ViewBag.bNew)
-        @Html.CheckBox("Approved", (bool)ViewBag.bApproved)
-        @Html.CheckBox("Committed", (bool)ViewBag.bCommitted)
-        @Html.CheckBox("Done", (bool)ViewBag.bDone)
-        @Html.CheckBox("Removed", (bool)ViewBag.bRemoved)
+        New: @Html.CheckBox("New", (bool)ViewBag.bNew)
+        | Approved: @Html.CheckBox("Approved", (bool)ViewBag.bApproved)
+        | Committed: @Html.CheckBox("Committed", (bool)ViewBag.bCommitted)
+        | Done: @Html.CheckBox("Done", (bool)ViewBag.bDone)
+        | Removed: @Html.CheckBox("Removed", (bool)ViewBag.bRemoved)
 
         
         <input type="submit" value="Search" />
@@ -52,7 +52,7 @@
 
 
 
-
+<script src="~/Scripts/jquery-ui-1.11.2.min.js"></script>
 <script>
 		$(function() {
 			if (!Modernizr.inputtypes['date']) {
